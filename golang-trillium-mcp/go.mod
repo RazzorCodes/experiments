@@ -4,6 +4,7 @@ go 1.25.9
 
 require (
 	github.com/getkin/kin-openapi v0.135.0
+	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/oapi-codegen/runtime v1.4.0
 	go.uber.org/zap v1.27.1

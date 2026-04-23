@@ -66,3 +66,23 @@ func Get() *zap.Logger {
 
 	return loggerInstance
 }
+
+func Fatal(message string) {
+	Get().WithOptions(zap.AddCallerSkip(1)).Fatal(message)
+}
+
+func Error(message string) {
+	Get().WithOptions(zap.AddCallerSkip(1)).Error(message)
+}
+
+func Warning(message string) {
+	Get().WithOptions(zap.AddCallerSkip(1)).Warn(message)
+}
+
+func Debug(message string) {
+	Get().WithOptions(zap.AddCallerSkip(1)).Debug(message)
+}
+
+func Info(message string) {
+	Get().WithOptions(zap.AddCallerSkip(1)).Info(message)
+}
