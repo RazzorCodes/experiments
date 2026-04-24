@@ -38,3 +38,18 @@ func ExtractWindowAroundKeywords(
 
 	return results
 }
+
+func firstNLines(text string, n int) string {
+	lines := strings.Split(text, "\n")
+	if len(lines) > n {
+		lines = lines[:n]
+	}
+	return strings.Join(lines, "\n")
+}
+
+func truncate(text string, maxChars int) string {
+	if maxChars > 0 && len(text) > maxChars {
+		return text[:maxChars]
+	}
+	return text
+}
