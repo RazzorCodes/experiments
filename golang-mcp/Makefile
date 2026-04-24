@@ -1,5 +1,5 @@
 OGEN      := $(shell go env GOPATH)/bin/ogen
-SPEC      := api/trillium-openapi.yaml
+SPEC      := api/openapi.json
 OGEN_CFG  := api/ogen.yml
 OGEN_OUT  := internal/ogen
 

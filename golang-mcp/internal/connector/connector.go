@@ -3,18 +3,21 @@ package connectors
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"razzor/golang-mcp/internal/config"
 	"razzor/golang-mcp/internal/helpers"
 	"razzor/golang-mcp/internal/ogen"
 	logger "razzor/golang-mcp/internal/utils"
+	"strings"
+
+	"github.com/ogen-go/ogen/ogenerrors"
 )
 
 var triliumConv = helpers.NewTrilliumConverter()
 
 var ErrHandshakeFailed = errors.New("server handshake failed")
 var ErrClientNotInit = errors.New("client not initialized")
+var ErrUnexpected = errors.New("unexpected value")
 
 type TrilliumConnector struct {
 	client *ogen.Client
@@ -62,7 +65,7 @@ func (conn *TrilliumConnector) Search(keyword string) ([]SearchResult, error) {
 
 	sr, ok := res.(*ogen.SearchResponse)
 	if !ok {
-		return nil, fmt.Errorf("unexpected search response type: %T", res)
+		return nil, ErrUnexpected
 	}
 
 	var results []SearchResult
@@ -99,9 +102,9 @@ func (conn *TrilliumConnector) Search(keyword string) ([]SearchResult, error) {
 	return results, nil
 }
 
-func (conn *TrilliumConnector) Content(noteId string) (string, error) {
+func (conn *TrilliumConnector) Content(noteId string) (*ContentResult, error) {
 	if conn == nil || conn.client == nil {
-		return "", ErrClientNotInit
+		return nil, ErrClientNotInit
 	}
 
 	ctx := context.Background()
@@ -110,24 +113,32 @@ func (conn *TrilliumConnector) Content(noteId string) (string, error) {
 		NoteId: ogen.EntityId(noteId),
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	note, ok := noteRes.(*ogen.Note)
 	if !ok {
-		return "", fmt.Errorf("unexpected note response type: %T", noteRes)
+		return nil, ErrUnexpected
 	}
 
 	body, err := conn.fetchContent(ctx, noteId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if mime, ok := note.Mime.Get(); ok && mime == "text/html" {
+	result := ContentResult{
+		Title:   note.Title.Or(""),
+		Type:    note.Mime.Or(""),
+		Id:      string(note.NoteId.Or("")),
+		Content: body,
+	}
+
+	if result.Type == "text/html" {
 		if md, err := triliumConv.ConvertString(body); err == nil {
-			return md, nil
+			result.Content = md
 		}
 	}
-	return body, nil
+
+	return &result, nil
 }
 
 func (conn *TrilliumConnector) fetchContent(ctx context.Context, noteId string) (string, error) {
@@ -137,14 +148,98 @@ func (conn *TrilliumConnector) fetchContent(ctx context.Context, noteId string) 
 	if err != nil {
 		return "", err
 	}
-	b, err := io.ReadAll(res.Data)
+	b, err := io.ReadAll(res.Response.Data)
 	if err != nil {
 		return "", err
 	}
 	return string(b), nil
 }
 
-// etapiAuth implements ogen.SecuritySource using the ETAPI token.
+func (conn *TrilliumConnector) Update(noteId string, content string) (*UpdateResult, error) {
+	if conn == nil || conn.client == nil {
+		return nil, ErrClientNotInit
+	}
+
+	ctx := context.Background()
+
+	noteRes, err := conn.client.GetNoteById(ctx, ogen.GetNoteByIdParams{
+		NoteId: ogen.EntityId(noteId),
+	})
+	if err != nil {
+		return nil, err
+	}
+	note, ok := noteRes.(*ogen.Note)
+	if !ok {
+		return nil, ErrUnexpected
+	}
+
+	html, err := helpers.ConvertMDToHTML(content)
+	if err != nil {
+		return nil, err
+	}
+
+	success, err := conn.updateContent(ctx, noteId, html)
+	if err != nil {
+		return nil, err
+	}
+
+	result := UpdateResult{
+		Title:   note.Title.Or(""),
+		Type:    note.Mime.Or(""),
+		Id:      string(note.NoteId.Or("")),
+		Success: success,
+	}
+
+	return &result, nil
+}
+
+func (conn *TrilliumConnector) updateContent(ctx context.Context, noteId string, content string) (bool, error) {
+	err := conn.client.PutNoteContentById(
+		ctx,
+		ogen.PutNoteContentByIdReq{Data: strings.NewReader(content)},
+		ogen.PutNoteContentByIdParams{NoteId: ogen.EntityId(noteId)})
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (conn *TrilliumConnector) Create(parentId string, title string, content string) (*CreateResult, error) {
+	if conn == nil || conn.client == nil {
+		return nil, ErrClientNotInit
+	}
+
+	html, err := helpers.ConvertMDToHTML(content)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := context.Background()
+
+	res, err := conn.client.CreateNote(ctx, &ogen.CreateNoteDef{
+		ParentNoteId: ogen.EntityId(parentId),
+		Title:        title,
+		Type:         ogen.CreateNoteDefTypeText,
+		Mime:         ogen.NewOptString("text/html"),
+		Content:      html,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	nwb, ok := res.(*ogen.NoteWithBranch)
+	if !ok {
+		return nil, ErrUnexpected
+	}
+
+	note, _ := nwb.GetNote().Get()
+	return &CreateResult{
+		Title: note.Title.Or(""),
+		Id:    string(note.NoteId.Or("")),
+	}, nil
+}
+
 type etapiAuth struct {
 	token string
 }
@@ -154,5 +249,5 @@ func (a *etapiAuth) EtapiTokenAuth(_ context.Context, _ ogen.OperationName) (oge
 }
 
 func (a *etapiAuth) EtapiBasicAuth(_ context.Context, _ ogen.OperationName) (ogen.EtapiBasicAuth, error) {
-	return ogen.EtapiBasicAuth{}, nil
+	return ogen.EtapiBasicAuth{}, ogenerrors.ErrSkipClientSecurity
 }

@@ -31,7 +31,7 @@ func NewTrilliumCli() (TrilliumCli, error) {
 	var t TrilliumCli
 	t.conn, err = connectors.NewTrilliumConnector(appconf)
 	if err != nil {
-		logger.Fatal("")
+		logger.Fatal(err.Error())
 	}
 
 	return t, nil
@@ -41,27 +41,69 @@ func main() {
 	logger.Info("=======================================")
 	logger.Info("=== cli === trillium-cli === golang ===")
 
-	trilliumCli, _ := NewTrilliumCli()
+	trilliumCli, err := NewTrilliumCli()
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 
 	cmd := &cli.Command{
 		Commands: []*cli.Command{
 			{
-				Name:    "search",
-				Aliases: []string{"s"},
-				Usage:   "search for a keyword",
-				Action:  clicommands.GetSearchAction(trilliumCli.conn),
+				Name:   "search",
+				Usage:  "search for a keyword",
+				Action: clicommands.GetSearchAction(trilliumCli.conn),
 			},
 			{
-				Name:    "content",
-				Aliases: []string{"c"},
-				Usage:   "get content of a note",
-				Action:  clicommands.GetContentAction(trilliumCli.conn),
+				Name: "content",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "id",
+					},
+				},
+				Usage:  "get content of a note",
+				Action: clicommands.GetContentAction(trilliumCli.conn),
+			},
+			{
+				Name: "update",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "id",
+					},
+					&cli.StringFlag{
+						Name: "path",
+					},
+					&cli.StringFlag{
+						Name: "content",
+					},
+				},
+				Usage:  "update content of a note",
+				Action: clicommands.GetUpdateAction(trilliumCli.conn),
+			},
+			{
+				Name: "add",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "title",
+					},
+					&cli.StringFlag{
+						Name: "parent",
+					},
+					&cli.StringFlag{
+						Name: "path",
+					},
+					&cli.StringFlag{
+						Name: "content",
+					},
+				},
+				Usage:  "add a new note",
+				Action: clicommands.GetCreateAction(trilliumCli.conn),
 			},
 		},
 	}
 
 	logger.Info("Running: " + strings.Join(os.Args, " "))
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		logger.Error(err.Error())
 		log.Fatal(err)
 	}
 	logger.Info("=== cli === trillium-cli === golang ===")
