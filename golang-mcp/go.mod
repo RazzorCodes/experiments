@@ -3,21 +3,19 @@ module razzor/golang-mcp
 go 1.25.9
 
 require (
+	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
 	github.com/getkin/kin-openapi v0.135.0
-	github.com/jaytaylor/html2text v0.0.0-20260303211410-1a4bdc82ecec
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/oapi-codegen/runtime v1.4.0
+	github.com/urfave/cli/v3 v3.8.0
 	go.uber.org/zap v1.27.1
 )
 
 require (
+	github.com/JohannesKaufmann/dom v0.2.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/clipperhouse/displaywidth v0.10.0 // indirect
-	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
-	github.com/fatih/color v1.18.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/google/jsonschema-go v0.4.2 // indirect
@@ -27,18 +25,12 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/oasdiff/yaml v0.0.9 // indirect
 	github.com/oasdiff/yaml3 v0.0.9 // indirect
-	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
-	github.com/olekukonko/errors v1.2.0 // indirect
-	github.com/olekukonko/ll v0.1.6 // indirect
-	github.com/olekukonko/tablewriter v1.1.4 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/segmentio/asm v1.1.3 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect
-	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/woodsbury/decimal128 v1.3.0 // indirect

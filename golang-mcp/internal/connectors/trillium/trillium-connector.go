@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"razzor/golang-mcp/internal/client"
 	"razzor/golang-mcp/internal/config"
+	"razzor/golang-mcp/internal/helpers"
 	logger "razzor/golang-mcp/internal/utils"
 	"strings"
 
-	"github.com/jaytaylor/html2text"
 )
+
+var triliumConv = newTrilliumConverter()
 
 type TrilliumConnector struct {
 	Client *client.ClientWithResponses
@@ -26,6 +28,7 @@ func NewTrilliumConnector(config config.Config) (*TrilliumConnector, error) {
 		Client: nil,
 		requestEditor: func(ctx context.Context, req *http.Request) error {
 			req.Header.Set("Authorization", "Bearer "+config.EtapiApikey)
+			req.Header.Set("Accept", "text/html")
 			return nil
 		},
 	}
@@ -84,13 +87,13 @@ func firstNLines(text string, n int) string {
 }
 
 func truncate(text string, maxChars int) string {
-	if len(text) > maxChars {
+	if maxChars > 0 && len(text) > maxChars {
 		return text[:maxChars]
 	}
 	return text
 }
 
-func (conn *TrilliumConnector) Search(keyword string) ([]NoteResult, error) {
+func (conn *TrilliumConnector) Search(keyword string) ([]SearchResult, error) {
 	if conn == nil || conn.Client == nil {
 		return nil, ErrClientNotInit
 	}
@@ -111,32 +114,80 @@ func (conn *TrilliumConnector) Search(keyword string) ([]NoteResult, error) {
 	}
 
 	if resp.ApplicationjsonCharsetUtf8200 != nil {
-		var result []NoteResult
+		var results []SearchResult
 		for _, note := range resp.ApplicationjsonCharsetUtf8200.Results {
-			content, err := conn.Client.GetNoteContentWithResponse(ctx, *note.NoteId, conn.requestEditor)
+			content, err :=
+				conn.Client.GetNoteContentWithResponse(
+					ctx,
+					*note.NoteId,
+					conn.requestEditor)
+
 			if err != nil || content.StatusCode() != http.StatusOK {
 				continue
 			}
 
 			var text string
 			if *note.Mime == "text/html" {
-				text, _ = html2text.FromString(string(content.Body))
+				text, _ = triliumConv.ConvertString(string(content.Body))
 			} else {
 				text = string(content.Body)
 			}
 
-			noteData := NoteResult{
-				Title:    *note.Title,
-				Type:     *note.Mime,
-				Id:       *note.BlobId,
-				Contents: truncate(text, 1024),
+			noteData := SearchResult{
+				Title: *note.Title,
+				Type:  *note.Mime,
+				Id:    *note.NoteId,
+				Hints: helpers.ExtractWindowAroundKeywords(
+					string(text),
+					[]string{keyword},
+					128,
+				),
 			}
 
-			result = append(result, noteData)
+			results = append(results, noteData)
 		}
 
-		return result, nil
+		return results, nil
 	}
 
 	return nil, nil
+}
+
+func (conn *TrilliumConnector) Content(noteId *client.EntityId) (string, error) {
+	if conn == nil || noteId == nil {
+		return "", ErrClientNotInit
+	}
+
+	ctx := context.Background()
+	note, err := conn.Client.GetNoteByIdWithResponse(ctx, *noteId, conn.requestEditor)
+	if err != nil {
+		return "", err
+	}
+	if note.StatusCode() != http.StatusOK {
+		return "", errors.New(
+			note.ApplicationjsonCharsetUtf8Default.Code + " : " +
+				note.ApplicationjsonCharsetUtf8Default.Message)
+	}
+
+	content, err :=
+		conn.Client.GetNoteContentWithResponse(
+			ctx,
+			*noteId,
+			conn.requestEditor)
+	if err != nil {
+		return "", err
+	}
+
+	mime := ""
+	if note.ApplicationjsonCharsetUtf8200 != nil && note.ApplicationjsonCharsetUtf8200.Mime != nil {
+		mime = *note.ApplicationjsonCharsetUtf8200.Mime
+	}
+
+	body := string(content.Body)
+	if mime == "text/html" {
+		if md, err := triliumConv.ConvertString(body); err == nil {
+			return md, nil
+		}
+	}
+	return body, nil
 }
