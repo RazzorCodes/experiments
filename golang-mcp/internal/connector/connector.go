@@ -102,6 +102,20 @@ func (conn *TrilliumConnector) Search(keyword string) ([]SearchResult, error) {
 	return results, nil
 }
 
+func (conn *TrilliumConnector) getNoteById(ctx context.Context, noteId string) (*ogen.Note, error) {
+	res, err := conn.client.GetNoteById(ctx, ogen.GetNoteByIdParams{
+		NoteId: ogen.EntityId(noteId),
+	})
+	if err != nil {
+		return nil, err
+	}
+	note, ok := res.(*ogen.Note)
+	if !ok {
+		return nil, ErrUnexpected
+	}
+	return note, nil
+}
+
 func (conn *TrilliumConnector) Content(noteId string) (*ContentResult, error) {
 	if conn == nil || conn.client == nil {
 		return nil, ErrClientNotInit
@@ -109,15 +123,9 @@ func (conn *TrilliumConnector) Content(noteId string) (*ContentResult, error) {
 
 	ctx := context.Background()
 
-	noteRes, err := conn.client.GetNoteById(ctx, ogen.GetNoteByIdParams{
-		NoteId: ogen.EntityId(noteId),
-	})
+	note, err := conn.getNoteById(ctx, noteId)
 	if err != nil {
 		return nil, err
-	}
-	note, ok := noteRes.(*ogen.Note)
-	if !ok {
-		return nil, ErrUnexpected
 	}
 
 	body, err := conn.fetchContent(ctx, noteId)
@@ -162,15 +170,9 @@ func (conn *TrilliumConnector) Update(noteId string, content string) (*UpdateRes
 
 	ctx := context.Background()
 
-	noteRes, err := conn.client.GetNoteById(ctx, ogen.GetNoteByIdParams{
-		NoteId: ogen.EntityId(noteId),
-	})
+	note, err := conn.getNoteById(ctx, noteId)
 	if err != nil {
 		return nil, err
-	}
-	note, ok := noteRes.(*ogen.Note)
-	if !ok {
-		return nil, ErrUnexpected
 	}
 
 	html, err := helpers.ConvertMDToHTML(content)
@@ -178,31 +180,20 @@ func (conn *TrilliumConnector) Update(noteId string, content string) (*UpdateRes
 		return nil, err
 	}
 
-	success, err := conn.updateContent(ctx, noteId, html)
+	err = conn.client.PutNoteContentById(
+		ctx,
+		ogen.PutNoteContentByIdReq{Data: strings.NewReader(html)},
+		ogen.PutNoteContentByIdParams{NoteId: ogen.EntityId(noteId)},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	result := UpdateResult{
-		Title:   note.Title.Or(""),
-		Type:    note.Mime.Or(""),
-		Id:      string(note.NoteId.Or("")),
-		Success: success,
-	}
-
-	return &result, nil
-}
-
-func (conn *TrilliumConnector) updateContent(ctx context.Context, noteId string, content string) (bool, error) {
-	err := conn.client.PutNoteContentById(
-		ctx,
-		ogen.PutNoteContentByIdReq{Data: strings.NewReader(content)},
-		ogen.PutNoteContentByIdParams{NoteId: ogen.EntityId(noteId)})
-
-	if err != nil {
-		return false, err
-	}
-	return true, nil
+	return &UpdateResult{
+		Title: note.Title.Or(""),
+		Type:  note.Mime.Or(""),
+		Id:    string(note.NoteId.Or("")),
+	}, nil
 }
 
 func (conn *TrilliumConnector) Create(parentId string, title string, content string) (*CreateResult, error) {

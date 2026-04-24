@@ -21,9 +21,7 @@ func main() {
 	logger.Get().Info("mcp: " + UserAgent)
 	logger.Get().Info("Initializing...")
 
-	var tm mcpdefs.TrilliumMcp
-	var err error
-	tm, err = tm.NewTrilliumMcp()
+	tm, err := mcpdefs.NewTrilliumMcp()
 	if err != nil {
 		logger.Get().Fatal("Failed to initialize: " + err.Error())
 	}

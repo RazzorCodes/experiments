@@ -15,10 +15,9 @@ type ContentResult struct {
 }
 
 type UpdateResult struct {
-	Title   string `json:"title"`
-	Type    string `json:"type"`
-	Id      string `json:"id"`
-	Success bool   `json:"success"`
+	Title string `json:"title"`
+	Type  string `json:"type"`
+	Id    string `json:"id"`
 }
 
 type CreateResult struct {

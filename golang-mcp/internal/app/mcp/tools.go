@@ -15,19 +15,19 @@ type TrilliumMcp struct {
 	conn   *connectors.TrilliumConnector
 }
 
-func (t TrilliumMcp) NewTrilliumMcp() (TrilliumMcp, error) {
+func NewTrilliumMcp() (TrilliumMcp, error) {
+	var t TrilliumMcp
+
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    "trillium-notes",
 		Version: "0.0.1",
 	}, nil)
 
-	t.Server = server
-
 	logger.Info("Setting up...")
 
 	appconf, err := config.GetConfig()
 	if err != nil {
-		logger.Info("Config was not loaded sucessfully")
+		logger.Fatal(err.Error())
 	}
 
 	logger.Info("AppVersion: " + appconf.AppVersion)
@@ -35,7 +35,7 @@ func (t TrilliumMcp) NewTrilliumMcp() (TrilliumMcp, error) {
 
 	t.conn, err = connectors.NewTrilliumConnector(appconf)
 	if err != nil {
-		logger.Fatal("")
+		logger.Fatal(err.Error())
 	}
 
 	logger.Info("Adding tools")
@@ -63,11 +63,8 @@ func (t TrilliumMcp) NewTrilliumMcp() (TrilliumMcp, error) {
 	logger.Info("Sucessfully setup trillium mcp")
 
 	t.Server = server
-
 	return t, nil
 }
-
-// ---- param types ----
 
 type SearchKeywordParams struct {
 	Keyword string `json:"keyword"`
@@ -88,26 +85,22 @@ type CreateNoteParams struct {
 	Content  string `json:"content"`
 }
 
-// ---- handlers ----
+func textResult(v any) (*mcp.CallToolResult, any, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{&mcp.TextContent{Text: string(b)}},
+	}, nil, nil
+}
 
 func (t TrilliumMcp) SearchKeyword(ctx context.Context, req *mcp.CallToolRequest, params SearchKeywordParams) (*mcp.CallToolResult, any, error) {
 	results, err := t.conn.Search(params.Keyword)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	var output string
-	for _, r := range results {
-		b, err := json.Marshal(r)
-		if err != nil {
-			return nil, nil, err
-		}
-		output += string(b) + "\n"
-	}
-
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: output}},
-	}, nil, nil
+	return textResult(results)
 }
 
 func (t TrilliumMcp) GetContent(ctx context.Context, req *mcp.CallToolRequest, params NoteIdParams) (*mcp.CallToolResult, any, error) {
@@ -115,15 +108,7 @@ func (t TrilliumMcp) GetContent(ctx context.Context, req *mcp.CallToolRequest, p
 	if err != nil {
 		return nil, nil, err
 	}
-
-	b, err := json.Marshal(res)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: string(b)}},
-	}, nil, nil
+	return textResult(res)
 }
 
 func (t TrilliumMcp) UpdateNote(ctx context.Context, req *mcp.CallToolRequest, params UpdateNoteParams) (*mcp.CallToolResult, any, error) {
@@ -131,15 +116,7 @@ func (t TrilliumMcp) UpdateNote(ctx context.Context, req *mcp.CallToolRequest, p
 	if err != nil {
 		return nil, nil, err
 	}
-
-	b, err := json.Marshal(res)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: string(b)}},
-	}, nil, nil
+	return textResult(res)
 }
 
 func (t TrilliumMcp) CreateNote(ctx context.Context, req *mcp.CallToolRequest, params CreateNoteParams) (*mcp.CallToolResult, any, error) {
@@ -147,13 +124,5 @@ func (t TrilliumMcp) CreateNote(ctx context.Context, req *mcp.CallToolRequest, p
 	if err != nil {
 		return nil, nil, err
 	}
-
-	b, err := json.Marshal(res)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: string(b)}},
-	}, nil, nil
+	return textResult(res)
 }

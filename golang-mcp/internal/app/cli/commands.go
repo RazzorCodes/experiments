@@ -13,6 +13,23 @@ import (
 
 var ErrInvalidParam = errors.New("Parameter value invalid")
 
+func contentFromFlags(cmd *clisdk.Command) (string, error) {
+	if file := cmd.String("path"); file != "" {
+		data, err := os.ReadFile(file)
+		return string(data), err
+	}
+	return cmd.String("content"), nil
+}
+
+func printJSON(v any) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(b))
+	return nil
+}
+
 func GetSearchAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 	return func(ctx context.Context, cmd *clisdk.Command) error {
 		if conn == nil {
@@ -25,8 +42,9 @@ func GetSearchAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 		}
 
 		for _, r := range res {
-			b, _ := json.Marshal(r)
-			fmt.Println(string(b))
+			if err := printJSON(r); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -38,16 +56,12 @@ func GetContentAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 			return ErrInvalidParam
 		}
 
-		noteId := cmd.String("id")
-
-		res, err := conn.Content(noteId)
+		res, err := conn.Content(cmd.String("id"))
 		if err != nil {
 			return err
 		}
 
-		b, _ := json.Marshal(res)
-		fmt.Println(string(b))
-		return nil
+		return printJSON(res)
 	}
 }
 
@@ -57,27 +71,17 @@ func GetUpdateAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 			return ErrInvalidParam
 		}
 
-		noteId := cmd.String("id")
-		file := cmd.String("path")
-		content := ""
-		if file != "" {
-			data, err := os.ReadFile(file)
-			if err != nil {
-				return err
-			}
-			content = string(data)
-		} else {
-			content = cmd.String("content")
-		}
-
-		res, err := conn.Update(noteId, content)
+		content, err := contentFromFlags(cmd)
 		if err != nil {
 			return err
 		}
 
-		b, _ := json.Marshal(res)
-		fmt.Println(string(b))
-		return nil
+		res, err := conn.Update(cmd.String("id"), content)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(res)
 	}
 }
 
@@ -87,27 +91,16 @@ func GetCreateAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 			return ErrInvalidParam
 		}
 
-		title := cmd.String("title")
-		parent := cmd.String("parent")
-		file := cmd.String("path")
-		content := ""
-		if file != "" {
-			data, err := os.ReadFile(file)
-			if err != nil {
-				return err
-			}
-			content = string(data)
-		} else {
-			content = cmd.String("content")
-		}
-
-		res, err := conn.Create(parent, title, content)
+		content, err := contentFromFlags(cmd)
 		if err != nil {
 			return err
 		}
 
-		b, _ := json.Marshal(res)
-		fmt.Println(string(b))
-		return nil
+		res, err := conn.Create(cmd.String("parent"), cmd.String("title"), content)
+		if err != nil {
+			return err
+		}
+
+		return printJSON(res)
 	}
 }
