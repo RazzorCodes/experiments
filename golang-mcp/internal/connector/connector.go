@@ -1,4 +1,4 @@
-package connectors
+package connector
 
 import (
 	"context"
@@ -9,8 +9,6 @@ import (
 	"razzor/golang-mcp/internal/ogen"
 	logger "razzor/golang-mcp/internal/utils"
 	"strings"
-
-	"github.com/ogen-go/ogen/ogenerrors"
 )
 
 var triliumConv = helpers.NewTrilliumConverter()
@@ -229,16 +227,4 @@ func (conn *TrilliumConnector) Create(parentId string, title string, content str
 		Title: note.Title.Or(""),
 		Id:    string(note.NoteId.Or("")),
 	}, nil
-}
-
-type etapiAuth struct {
-	token string
-}
-
-func (a *etapiAuth) EtapiTokenAuth(_ context.Context, _ ogen.OperationName) (ogen.EtapiTokenAuth, error) {
-	return ogen.EtapiTokenAuth{APIKey: "Bearer " + a.token}, nil
-}
-
-func (a *etapiAuth) EtapiBasicAuth(_ context.Context, _ ogen.OperationName) (ogen.EtapiBasicAuth, error) {
-	return ogen.EtapiBasicAuth{}, ogenerrors.ErrSkipClientSecurity
 }

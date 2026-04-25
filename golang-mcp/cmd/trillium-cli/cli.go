@@ -6,7 +6,7 @@ import (
 	"os"
 	clicommands "razzor/golang-mcp/internal/app/cli"
 	"razzor/golang-mcp/internal/config"
-	connectors "razzor/golang-mcp/internal/connector"
+	connector "razzor/golang-mcp/internal/connector"
 	logger "razzor/golang-mcp/internal/utils"
 	"strings"
 
@@ -14,7 +14,7 @@ import (
 )
 
 type TrilliumCli struct {
-	conn *connectors.TrilliumConnector
+	conn *connector.TrilliumConnector
 }
 
 func NewTrilliumCli() (TrilliumCli, error) {
@@ -29,7 +29,7 @@ func NewTrilliumCli() (TrilliumCli, error) {
 	logger.Info("EtapiAddress: " + appconf.EtapiAddress)
 
 	var t TrilliumCli
-	t.conn, err = connectors.NewTrilliumConnector(appconf)
+	t.conn, err = connector.NewTrilliumConnector(appconf)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

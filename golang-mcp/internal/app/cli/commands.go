@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	connectors "razzor/golang-mcp/internal/connector"
+	connector "razzor/golang-mcp/internal/connector"
 
 	clisdk "github.com/urfave/cli/v3"
 )
@@ -30,7 +30,7 @@ func printJSON(v any) error {
 	return nil
 }
 
-func GetSearchAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
+func GetSearchAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
 	return func(ctx context.Context, cmd *clisdk.Command) error {
 		if conn == nil {
 			return ErrInvalidParam
@@ -50,7 +50,7 @@ func GetSearchAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 	}
 }
 
-func GetContentAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
+func GetContentAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
 	return func(ctx context.Context, cmd *clisdk.Command) error {
 		if conn == nil {
 			return ErrInvalidParam
@@ -65,7 +65,7 @@ func GetContentAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 	}
 }
 
-func GetUpdateAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
+func GetUpdateAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
 	return func(ctx context.Context, cmd *clisdk.Command) error {
 		if conn == nil {
 			return ErrInvalidParam
@@ -85,7 +85,7 @@ func GetUpdateAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
 	}
 }
 
-func GetCreateAction(conn *connectors.TrilliumConnector) clisdk.ActionFunc {
+func GetCreateAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
 	return func(ctx context.Context, cmd *clisdk.Command) error {
 		if conn == nil {
 			return ErrInvalidParam

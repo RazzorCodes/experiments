@@ -1,4 +1,4 @@
-package connectors
+package connector
 
 type SearchResult struct {
 	Title string   `json:"title"`

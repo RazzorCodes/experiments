@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"razzor/golang-mcp/internal/config"
-	connectors "razzor/golang-mcp/internal/connector"
+	connector "razzor/golang-mcp/internal/connector"
 	logger "razzor/golang-mcp/internal/utils"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -12,7 +12,7 @@ import (
 
 type TrilliumMcp struct {
 	Server *mcp.Server
-	conn   *connectors.TrilliumConnector
+	conn   *connector.TrilliumConnector
 }
 
 func NewTrilliumMcp() (TrilliumMcp, error) {
@@ -33,7 +33,7 @@ func NewTrilliumMcp() (TrilliumMcp, error) {
 	logger.Info("AppVersion: " + appconf.AppVersion)
 	logger.Info("EtapiAddress: " + appconf.EtapiAddress)
 
-	t.conn, err = connectors.NewTrilliumConnector(appconf)
+	t.conn, err = connector.NewTrilliumConnector(appconf)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
