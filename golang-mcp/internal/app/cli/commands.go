@@ -85,6 +85,36 @@ func GetUpdateAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
 	}
 }
 
+func GetMoveAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
+	return func(ctx context.Context, cmd *clisdk.Command) error {
+		if conn == nil {
+			return ErrInvalidParam
+		}
+
+		res, err := conn.Move(cmd.String("id"), cmd.String("parent"))
+		if err != nil {
+			return err
+		}
+
+		return printJSON(res)
+	}
+}
+
+func GetDeleteAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
+	return func(ctx context.Context, cmd *clisdk.Command) error {
+		if conn == nil {
+			return ErrInvalidParam
+		}
+
+		res, err := conn.Delete(cmd.String("id"))
+		if err != nil {
+			return err
+		}
+
+		return printJSON(res)
+	}
+}
+
 func GetCreateAction(conn *connector.TrilliumConnector) clisdk.ActionFunc {
 	return func(ctx context.Context, cmd *clisdk.Command) error {
 		if conn == nil {

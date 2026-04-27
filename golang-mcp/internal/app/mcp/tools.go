@@ -60,6 +60,16 @@ func NewTrilliumMcp() (TrilliumMcp, error) {
 		Description: "Create a new note under a parent note. Content is Markdown and will be converted to HTML.",
 	}, t.CreateNote)
 
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "move_note",
+		Description: "Move a note to a new parent. Removes all existing parent branches and places the note under the new parent.",
+	}, t.MoveNote)
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "delete_note",
+		Description: "Delete a note and all its children by note ID.",
+	}, t.DeleteNote)
+
 	logger.Info("Sucessfully setup trillium mcp")
 
 	t.Server = server
@@ -83,6 +93,11 @@ type CreateNoteParams struct {
 	ParentId string `json:"parent_id"`
 	Title    string `json:"title"`
 	Content  string `json:"content"`
+}
+
+type MoveNoteParams struct {
+	NoteId      string `json:"note_id"`
+	NewParentId string `json:"new_parent_id"`
 }
 
 func textResult(v any) (*mcp.CallToolResult, any, error) {
@@ -121,6 +136,22 @@ func (t TrilliumMcp) UpdateNote(ctx context.Context, req *mcp.CallToolRequest, p
 
 func (t TrilliumMcp) CreateNote(ctx context.Context, req *mcp.CallToolRequest, params CreateNoteParams) (*mcp.CallToolResult, any, error) {
 	res, err := t.conn.Create(params.ParentId, params.Title, params.Content)
+	if err != nil {
+		return nil, nil, err
+	}
+	return textResult(res)
+}
+
+func (t TrilliumMcp) MoveNote(ctx context.Context, req *mcp.CallToolRequest, params MoveNoteParams) (*mcp.CallToolResult, any, error) {
+	res, err := t.conn.Move(params.NoteId, params.NewParentId)
+	if err != nil {
+		return nil, nil, err
+	}
+	return textResult(res)
+}
+
+func (t TrilliumMcp) DeleteNote(ctx context.Context, req *mcp.CallToolRequest, params NoteIdParams) (*mcp.CallToolResult, any, error) {
+	res, err := t.conn.Delete(params.NoteId)
 	if err != nil {
 		return nil, nil, err
 	}

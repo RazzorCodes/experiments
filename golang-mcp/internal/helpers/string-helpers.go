@@ -2,19 +2,16 @@ package helpers
 
 import "strings"
 
-// maybe switch to aho-corrasik?
-// edge case: multiple windows share the same identical content
-// issue: doesn't match case-insessitive
-func ExtractWindowAroundKeywords(
-	text string,
-	keywords []string,
-	windowSize int) []string {
+func ExtractWindowAroundKeywords(text string, keywords []string, windowSize int) []string {
+	lower := strings.ToLower(text)
+	seen := make(map[string]struct{})
 	var results []string
 
 	for _, kw := range keywords {
+		kwLower := strings.ToLower(kw)
 		start := 0
 		for {
-			i := strings.Index(text[start:], kw)
+			i := strings.Index(lower[start:], kwLower)
 			if i == -1 {
 				break
 			}
@@ -24,15 +21,18 @@ func ExtractWindowAroundKeywords(
 			if from < 0 {
 				from = 0
 			}
-
-			to := i + len(kw) + windowSize
+			to := i + len(kwLower) + windowSize
 			if to > len(text) {
 				to = len(text)
 			}
 
-			results = append(results, text[from:to])
+			window := text[from:to]
+			if _, dup := seen[window]; !dup {
+				seen[window] = struct{}{}
+				results = append(results, window)
+			}
 
-			start = i + 1 // continue search
+			start = i + 1
 		}
 	}
 

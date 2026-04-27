@@ -80,6 +80,29 @@ func main() {
 				Action: clicommands.GetUpdateAction(trilliumCli.conn),
 			},
 			{
+				Name: "move",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "id",
+					},
+					&cli.StringFlag{
+						Name: "parent",
+					},
+				},
+				Usage:  "move a note to a new parent",
+				Action: clicommands.GetMoveAction(trilliumCli.conn),
+			},
+			{
+				Name: "delete",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "id",
+					},
+				},
+				Usage:  "delete a note by id",
+				Action: clicommands.GetDeleteAction(trilliumCli.conn),
+			},
+			{
 				Name: "add",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
