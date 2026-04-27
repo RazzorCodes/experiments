@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: mistral-7b-ollama-ingress
+    namespace: homelab-ai
+spec:
+    rules:
+        - host: mistral-7b.llm.lan
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: mistral-7b-ollama
+                            port:
+                                number: 80

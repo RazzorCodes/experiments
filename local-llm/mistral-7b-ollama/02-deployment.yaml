@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: mistral-7b-ollama
+    namespace: homelab-ai
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: mistral-7b-ollama
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                app: mistral-7b-ollama
+        spec:
+            nodeSelector:
+                kubernetes.io/hostname: homelab-worker-01
+            runtimeClassName: nvidia
+            containers:
+                - name: ollama
+                  image: ollama/ollama:latest
+                  command:
+                      - sh
+                      - -c
+                      - |
+                          ollama serve &
+                          OLLAMA_PID=$!
+                          until ollama list > /dev/null 2>&1; do sleep 1; done
+                          if ! ollama list | grep -q "^mistral "; then
+                            echo "Pulling mistral base..."
+                            ollama pull mistral
+                          fi
+                          if ! ollama list | grep -q "^mistral-4k "; then
+                            echo "Creating mistral-4k with bounded context..."
+                            printf 'FROM mistral\nPARAMETER num_ctx 8192\n' > /tmp/Modelfile
+                            ollama create mistral-4k -f /tmp/Modelfile
+                          fi
+                          echo "Ready."
+                          wait $OLLAMA_PID
+                  env:
+                      - name: OLLAMA_MODELS
+                        value: /models
+                      - name: OLLAMA_HOST
+                        value: 0.0.0.0:11434
+                      - name: OLLAMA_KEEP_ALIVE
+                        value: "-1"
+                      - name: OLLAMA_FLASH_ATTENTION
+                        value: "1"
+                  ports:
+                      - containerPort: 11434
+                  resources:
+                      limits:
+                          nvidia.com/gpu: "1"
+                  volumeMounts:
+                      - name: models
+                        mountPath: /models
+                  startupProbe:
+                      httpGet:
+                          path: /api/tags
+                          port: 11434
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
+                      failureThreshold: 60
+                  readinessProbe:
+                      httpGet:
+                          path: /api/tags
+                          port: 11434
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                  livenessProbe:
+                      httpGet:
+                          path: /api/tags
+                          port: 11434
+                      initialDelaySeconds: 30
+                      periodSeconds: 30
+            volumes:
+                - name: models
+                  persistentVolumeClaim:
+                      claimName: mistral-7b-ollama-pvc

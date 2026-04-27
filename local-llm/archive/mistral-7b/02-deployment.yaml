@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: mistral-7b
+    namespace: homelab-ai
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: mistral-7b
+    template:
+        metadata:
+            labels:
+                app: mistral-7b
+        spec:
+            nodeSelector:
+                kubernetes.io/hostname: homelab-worker-01
+            runtimeClassName: nvidia
+            initContainers:
+                - name: download-model
+                  image: curlimages/curl:latest
+                  command:
+                      - sh
+                      - -c
+                      - |
+                          MODEL=/models/Mistral-7B-Instruct-v0.3-Q4_K_M.gguf
+                          BASE="https://huggingface.co/bartowski/Mistral-7B-Instruct-v0.3-GGUF/resolve/main"
+                          if [ -f "$MODEL" ] && [ "$(dd if=$MODEL bs=1 count=4 2>/dev/null)" = "GGUF" ]; then
+                            echo "Valid model already present, skipping download."
+                          else
+                            [ -f "$MODEL" ] && echo "Corrupt/incomplete model found, re-downloading..." && rm -f "$MODEL"
+                            echo "Downloading Mistral-7B-Instruct-v0.3 Q4_K_M..."
+                            curl -L --fail -o "$MODEL" "$BASE/Mistral-7B-Instruct-v0.3-Q4_K_M.gguf" \
+                              && echo "Download complete." \
+                              || { echo "Download failed"; rm -f "$MODEL"; exit 1; }
+                          fi
+                  volumeMounts:
+                      - name: models
+                        mountPath: /models
+            containers:
+                - name: llama-server
+                  image: ghcr.io/ggerganov/llama.cpp:server-cuda-b4719
+                  args:
+                      - --model
+                      - /models/Mistral-7B-Instruct-v0.3-Q4_K_M.gguf
+                      - --host
+                      - 0.0.0.0
+                      - --port
+                      - "8080"
+                      - --n-gpu-layers
+                      - "99"
+                      - --ctx-size
+                      - "4096"
+                      - --jinja
+                  ports:
+                      - containerPort: 8080
+                  resources:
+                      limits:
+                          nvidia.com/gpu: "1"
+                  volumeMounts:
+                      - name: models
+                        mountPath: /models
+                  readinessProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      initialDelaySeconds: 15
+                      periodSeconds: 10
+                  livenessProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      initialDelaySeconds: 60
+                      periodSeconds: 30
+            volumes:
+                - name: models
+                  persistentVolumeClaim:
+                      claimName: mistral-7b-models-pvc

@@ -1,0 +1,22 @@
+[2026-04-25 16:46:44][INFO][auto][trillium-mcp/mcp.go:20] === mcp === trillium-mcp === golang ===
+[2026-04-25 16:46:44][INFO][auto][trillium-mcp/mcp.go:21] mcp: trillium-mcp/0.0.1
+[2026-04-25 16:46:44][INFO][auto][trillium-mcp/mcp.go:22] Initializing...
+[2026-04-25 16:46:44][INFO][auto][mcp/tools.go:26] Setting up...
+[2026-04-25 16:46:44][ERROR][auto][config/config.go:33] Could not retrieve .env file: open .env: no such file or directory
+[2026-04-25 16:46:44][WARN][auto][config/config.go:65] Governor could not retreive env. Falling back to defaults
+[2026-04-25 16:46:44][INFO][auto][mcp/tools.go:30] Config was not loaded sucessfully
+[2026-04-25 16:46:44][INFO][auto][mcp/tools.go:33] AppVersion: 0.0.0-error
+[2026-04-25 16:46:44][INFO][auto][mcp/tools.go:34] EtapiAddress: localhost:8000
+[2026-04-25 16:46:44][ERROR][auto][connector/connector.go:44] Could not connect to Trillium: do request: Get "localhost:///app-info": unsupported protocol scheme "localhost"
+[2026-04-25 16:46:44][FATAL][auto][mcp/tools.go:38] 
+[2026-04-25 18:18:44][INFO][auto][trillium-mcp/mcp.go:20] === mcp === trillium-mcp === golang ===
+[2026-04-25 18:18:44][INFO][auto][trillium-mcp/mcp.go:21] mcp: trillium-mcp/0.0.1
+[2026-04-25 18:18:44][INFO][auto][trillium-mcp/mcp.go:22] Initializing...
+[2026-04-25 18:18:44][INFO][auto][mcp/tools.go:26] Setting up...
+[2026-04-25 18:18:44][ERROR][auto][config/config.go:33] Could not retrieve .env file: open .env: no such file or directory
+[2026-04-25 18:18:44][WARN][auto][config/config.go:65] Governor could not retreive env. Falling back to defaults
+[2026-04-25 18:18:44][INFO][auto][mcp/tools.go:30] Config was not loaded sucessfully
+[2026-04-25 18:18:44][INFO][auto][mcp/tools.go:33] AppVersion: 0.0.0-error
+[2026-04-25 18:18:44][INFO][auto][mcp/tools.go:34] EtapiAddress: localhost:8000
+[2026-04-25 18:18:44][ERROR][auto][connector/connector.go:44] Could not connect to Trillium: do request: Get "localhost:///app-info": unsupported protocol scheme "localhost"
+[2026-04-25 18:18:44][FATAL][auto][mcp/tools.go:38] 

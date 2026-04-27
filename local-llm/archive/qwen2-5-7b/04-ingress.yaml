@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: qwen2-5-7b-ingress
+    namespace: homelab-ai
+spec:
+    rules:
+        - host: qwen2-5-7b.llm.lan
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: qwen2-5-7b
+                            port:
+                                number: 80

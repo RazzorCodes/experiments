@@ -1,0 +1,9 @@
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+    name: llm-transport
+    namespace: homelab-ai
+spec:
+    forwardingTimeouts:
+        responseHeaderTimeout: 300s
+        dialTimeout: 30s
